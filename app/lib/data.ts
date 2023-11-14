@@ -35,7 +35,7 @@ export async function fetchRevenue() {
 export async function fetchLatestInvoices() {
   try {
     const data = await sql<LatestInvoiceRaw>`
-      SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
+      SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id, invoices.date
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
       ORDER BY invoices.date DESC
@@ -45,7 +45,14 @@ export async function fetchLatestInvoices() {
       ...invoice,
       amount: formatCurrency(invoice.amount),
     }));
-    return latestInvoices;
+    return {
+      props: {
+        latestInvoices,
+      },
+      // Disable caching for this page
+      // (This means the page will be regenerated on every request)
+      revalidate: 1, // In seconds, set to 1 for almost immediate regeneration
+    };
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch the latest invoices.');
